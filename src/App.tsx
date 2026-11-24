@@ -326,6 +326,8 @@ function App() {
                 {step === 0 && <div className="fields-grid">
                   <Field id="studentName" label="Student full name" required errors={errors}>{input('studentName', 'Enter your full name', { autoComplete: 'name' })}</Field>
                   <Field id="guardianName" label="Father / guardian name" errors={errors}>{input('guardianName', 'Optional')}</Field>
+                  <Field id="guardianMobile" label="Father / guardian contact number" errors={errors}>{input('guardianMobile', 'Optional — 03XX XXXXXXX', { type: 'tel', inputMode: 'tel' })}</Field>
+                  <Field id="guardianOccupation" label="Father / guardian occupation" required errors={errors}>{input('guardianOccupation', 'Enter occupation')}</Field>
                   <Field id="gender" label="Gender" required errors={errors}>{select('gender', 'Select gender', GENDERS)}</Field>
                   <Field id="studentMobile" label="Mobile / WhatsApp number" required errors={errors}>{input('studentMobile', '03XX XXXXXXX', { type: 'tel', inputMode: 'tel', autoComplete: 'tel' })}</Field>
                   <div className="field-span-2"><Field id="city" label="City / district" required errors={errors}>{input('city', 'e.g. Sukkur', { autoComplete: 'address-level2' })}</Field></div>
@@ -346,6 +348,7 @@ function App() {
                   </Field>
                   <div className="field-span-2"><Field id="institution" label="School / college / university name" required errors={errors}>{input('institution', 'Name of your current institute')}</Field></div>
                   <div className="field-span-2"><Field id="coursePreference" label="Preferred GIST course" required errors={errors} description="This is your current choice. You can change it later and select any other course offered by GIST.">{select('coursePreference', 'Select a course', GIST_COURSES)}</Field></div>
+                  <div className="field-span-2"><Field id="referralSource" label="Where did you hear about this scholarship?" errors={errors} description="Optional — mention a referral, person, school, social media page, or other source.">{input('referralSource', 'Referral or source, if any')}</Field></div>
                   <div className="field-span-2 laptop-note"><Trophy size={20}/><span><strong>Laptop award:</strong> the top performer in each of the three test categories will receive a laptop.</span></div>
                   <div className="field-span-2 payment-card">
                     <div className="payment-card__heading"><div className="payment-icon"><span>EP</span></div><div><span>PAYMENT METHOD</span><h3>Easypaisa</h3></div></div>
@@ -354,8 +357,8 @@ function App() {
                       <div><span>Account number</span><div className="payment-number-row"><strong>{EASYPAISA_ACCOUNT_NUMBER}</strong><button type="button" onClick={() => void copyPaymentNumber()} aria-label="Copy Easypaisa account number" title="Copy account number">{paymentCopied ? <Check size={17} /> : <Copy size={17} />}</button><em aria-live="polite">{paymentCopied ? 'Copied' : ''}</em></div></div>
                     </div>
                     {!PAYMENT_DETAILS_READY && <p className="payment-setup-warning">The Easypaisa account number must be configured before this form is published.</p>}
-                    <p className="payment-instruction">Pay the registration fee to the account above, then upload the receipt below.</p>
-                    <Field id="paymentReceiptData" label="Payment receipt" required errors={errors} description="JPG, PNG, WebP, or PDF — maximum 2 MB.">
+                    <p className="payment-instruction"><strong>Test fee: PKR 500.</strong> Pay to the account above, then upload the receipt below.</p>
+                    <Field id="paymentReceiptData" label="PKR 500 test fee receipt" required errors={errors} description="JPG, PNG, WebP, or PDF — maximum 2 MB.">
                       <label className={`receipt-upload ${data.paymentReceiptData ? 'receipt-upload--ready' : ''}`} htmlFor="paymentReceiptData">
                         <input key={receiptInputKey} id="paymentReceiptData" name="paymentReceiptData" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" onChange={handleReceipt} aria-invalid={Boolean(errors.paymentReceiptData)} aria-describedby={errors.paymentReceiptData ? 'paymentReceiptData-error' : undefined} />
                         <span className="receipt-upload__icon">{data.paymentReceiptData ? <CheckCircle2 size={23}/> : <ClipboardCheck size={23}/>}</span>
