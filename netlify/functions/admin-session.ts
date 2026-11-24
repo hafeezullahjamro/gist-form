@@ -6,6 +6,7 @@ import {
   isSecureRequest,
   verifyAdminCookie,
 } from '../../server/admin-auth';
+import { withLambda } from '@netlify/aws-lambda-compat';
 
 type Event = {
   httpMethod: string;
@@ -18,7 +19,7 @@ const jsonHeaders = {
   'Cache-Control': 'no-store',
 };
 
-export async function handler(event: Event) {
+async function handler(event: Event) {
   const secure = isSecureRequest(event.headers);
   if (event.httpMethod === 'GET') {
     const authenticated = verifyAdminCookie(event.headers.cookie);
@@ -56,3 +57,5 @@ export async function handler(event: Event) {
     return { statusCode: 503, headers: jsonHeaders, body: JSON.stringify({ message: 'Admin login is not configured yet.' }) };
   }
 }
+
+export default withLambda(handler);
