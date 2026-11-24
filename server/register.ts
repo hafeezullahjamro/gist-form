@@ -21,7 +21,7 @@ type StoredRegistration = {
   coursePreference: string; receiptKey: string;
 };
 
-const STORE_OPTIONS = { name: 'registration-submissions', region: 'ap-southeast-1' } as const;
+const STORE_OPTIONS = { name: 'registration-submissions' } as const;
 
 function normalizedName(value: string) {
   return value.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
