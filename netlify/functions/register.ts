@@ -1,4 +1,5 @@
 import { getStore } from '@netlify/blobs';
+import { withLambda } from '@netlify/aws-lambda-compat';
 import { checkRegistrationSetup, registerStudent } from '../../server/register';
 import type { ReceiptStorage } from '../../server/register';
 
@@ -9,7 +10,7 @@ const EXTENSIONS: Record<string, string> = {
   'application/pdf': 'pdf',
 };
 
-export async function handler(event: { httpMethod: string; body: string | null }) {
+async function handler(event: { httpMethod: string; body: string | null }) {
   const headers = {
     'Content-Type': 'application/json; charset=utf-8',
     'Cache-Control': 'no-store',
@@ -43,3 +44,5 @@ export async function handler(event: { httpMethod: string; body: string | null }
   const result = await registerStudent(payload, storeReceipt);
   return { statusCode: result.status, headers, body: JSON.stringify(result.data) };
 }
+
+export default withLambda(handler);
