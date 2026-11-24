@@ -108,7 +108,8 @@ export default function AdminPortal({ onExit }: { onExit: () => void }) {
 
   const today = new Date().toISOString().slice(0, 10);
   const todayCount = data.rows.filter(row => row[0]?.startsWith(today)).length;
-  const receiptCount = data.rows.filter(row => Boolean(row[12])).length;
+  const receiptColumn = data.headers.indexOf('Payment Receipt Blob Key');
+  const receiptCount = receiptColumn >= 0 ? data.rows.filter(row => Boolean(row[receiptColumn])).length : 0;
 
   if (checking) {
     return <main className="container admin-shell"><div className="admin-loading"><span className="spinner" />Checking secure session…</div></main>;
