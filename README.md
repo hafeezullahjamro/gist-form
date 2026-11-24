@@ -83,7 +83,7 @@ The test category initially contains "Pending GIST assignment".
 
 Receipts are stored in the private, site-wide Netlify Blob store named
 payment-receipts, using keys such as
-receipts/GIST-2026-XXXXXXXXXX.jpg. The database stores only the matching
+receipts/GIST-2026-XXXXXXXXXX.jpg. The registration record stores only the matching
 private blob key. Receipt uploads accept JPG, PNG, WebP or PDF files up to
 2 MB.
 
@@ -96,14 +96,15 @@ Run:
 
 Netlify Blobs local development requires a recent Netlify CLI. A bare
 npm run dev previews only the browser interface and does not serve the
-Functions or database.
+Functions or Blob storage. After changing admin environment variables, publish a
+new deploy so Functions receive the updated values.
 
 ## Security notes
 
 - Applicant and receipt endpoints require a valid signed admin session.
 - The admin login route is rate-limited in netlify.toml.
 - Applicant records and receipts stay in private Netlify Blobs stores.
-- A unique database constraint prevents simultaneous duplicate submissions.
+- A private duplicate key prevents repeat submissions using the same student name and number.
 - Receipt files are revalidated on the server and never receive public URLs.
 - Real passwords and secrets must never be committed to GitHub.
 
