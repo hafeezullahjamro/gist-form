@@ -1,4 +1,6 @@
 import { getStore } from '@netlify/blobs';
+import { withLambda } from '@netlify/aws-lambda-compat';
+import type { HandlerResponse } from '@netlify/aws-lambda-compat';
 import { verifyAdminCookie } from '../../server/admin-auth';
 
 type Event = {
@@ -12,7 +14,7 @@ const CONTENT_TYPES: Record<string, string> = {
 };
 const jsonHeaders = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' };
 
-export async function handler(event: Event) {
+async function handler(event: Event): Promise<HandlerResponse> {
   if (event.httpMethod !== 'GET') {
     return { statusCode: 405, headers: { ...jsonHeaders, Allow: 'GET' }, body: JSON.stringify({ message: 'Method not allowed.' }) };
   }
@@ -25,7 +27,7 @@ export async function handler(event: Event) {
     return { statusCode: 400, headers: jsonHeaders, body: JSON.stringify({ message: 'Invalid receipt reference.' }) };
   }
   try {
-    const store = getStore({ name: 'payment-receipts', region: 'ap-southeast-1' });
+    const store = getStore({ name: 'payment-receipts' });
     const receipt = await store.get(key, { type: 'arrayBuffer' });
     if (!receipt) {
       return { statusCode: 404, headers: jsonHeaders, body: JSON.stringify({ message: 'Receipt not found.' }) };
@@ -47,3 +49,5 @@ export async function handler(event: Event) {
     return { statusCode: 503, headers: jsonHeaders, body: JSON.stringify({ message: 'Receipt is temporarily unavailable.' }) };
   }
 }
+
+export default withLambda(handler);
