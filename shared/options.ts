@@ -4,7 +4,7 @@ export const TEST_CATEGORIES = [
   'Undergraduate',
 ] as const;
 
-export const GENDERS = ['Male', 'Female', 'Prefer not to say'] as const;
+export const GENDERS = ['Male', 'Female'] as const;
 
 export const EDUCATION_LEVELS = [
   'Middle School',
