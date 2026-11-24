@@ -1,7 +1,7 @@
 # GIST Scholarship Program 2026 — Registration Portal
 
 A responsive scholarship registration portal deployed on Netlify. Applicant
-records are stored in **Netlify Database** and payment receipts are stored
+records and payment receipts are stored privately in **Netlify Blobs**
 privately in **Netlify Blobs**.
 
 ## Included
@@ -11,7 +11,7 @@ privately in **Netlify Blobs**.
 - GIST assigns the test category from submitted education details.
 - Students may change to any offered GIST course later.
 - Scholarship and laptop-award messaging for all three test groups.
-- Database-level duplicate protection using student name and WhatsApp number.
+- Duplicate protection using student name and WhatsApp number.
 - Private receipt storage with no public file URLs.
 - Protected administrator dashboard with search, receipt viewing and
   Excel-compatible CSV export.
@@ -20,7 +20,7 @@ privately in **Netlify Blobs**.
 
 - The netlify/database/migrations directory defines the PostgreSQL schema.
   Netlify applies pending migrations before publishing a production deploy.
-- server/register.ts validates and writes applicant records to Netlify Database.
+- server/register.ts validates and writes applicant records to private Netlify Blobs.
 - netlify/functions/register.ts stores each payment receipt in the private
   payment-receipts Blob store, then inserts the matching record.
 - Admin routes verify a signed, HTTP-only session before returning applicant
@@ -52,7 +52,7 @@ private. Generate the session secret with: openssl rand -hex 32
 3. Set the environment variables above.
 4. Trigger a production deploy.
 5. Open /api/register. A ready deployment returns JSON containing
-   "ok": true and "Netlify Database is connected and ready."
+   "ok": true and "Netlify storage is connected and ready."
 6. Complete one test registration and verify it in the private dashboard.
 
 ## Administrator dashboard
@@ -94,7 +94,7 @@ Run:
     npm install
     npm run netlify:dev
 
-Netlify Database local development requires a recent Netlify CLI. A bare
+Netlify Blobs local development requires a recent Netlify CLI. A bare
 npm run dev previews only the browser interface and does not serve the
 Functions or database.
 
@@ -102,7 +102,7 @@ Functions or database.
 
 - Applicant and receipt endpoints require a valid signed admin session.
 - The admin login route is rate-limited in netlify.toml.
-- Database queries use parameterized SQL.
+- Applicant records and receipts stay in private Netlify Blobs stores.
 - A unique database constraint prevents simultaneous duplicate submissions.
 - Receipt files are revalidated on the server and never receive public URLs.
 - Real passwords and secrets must never be committed to GitHub.
