@@ -117,7 +117,7 @@ export function validateRegistration(data: Registration): Errors {
       errors.paymentReceiptData = 'The receipt must be 2 MB or smaller.';
     }
   }
-  // Limits protect Sheets from extremely large/malformed inputs.
+  // Length limits protect the database from extremely large or malformed inputs.
   for (const key of Object.keys(data) as FieldKey[]) {
     if (key !== 'paymentReceiptData' && data[key].length > 180) errors[key] = 'Please keep your answer under 180 characters.';
   }
