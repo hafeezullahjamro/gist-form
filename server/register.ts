@@ -9,16 +9,19 @@ export type ReceiptStorage = (input: ReceiptStorageInput) => Promise<ReceiptStor
 
 export const REGISTRATION_HEADERS = [
   'Timestamp (UTC)', 'Registration ID', 'Student Full Name', 'Student WhatsApp',
-  'Father / Guardian Name', 'Gender', 'City / District', 'Current Education Level',
+  'Father / Guardian Name', 'Father / Guardian Contact', 'Father / Guardian Occupation',
+  'Gender', 'City / District', 'Current Education Level',
   'Class / Year / Semester', 'School / College / University',
-  'Test Category (Assigned by GIST)', 'Preferred GIST Course', 'Payment Receipt Blob Key',
+  'Test Category (Assigned by GIST)', 'Preferred GIST Course',
+  'Scholarship Referral / Source', 'Payment Receipt Blob Key',
 ];
 
 type StoredRegistration = {
   createdAt: string; registrationId: string; studentName: string; studentMobile: string;
-  guardianName: string; gender: string; city: string; educationLevel: string;
+  guardianName: string; guardianMobile: string; guardianOccupation: string;
+  gender: string; city: string; educationLevel: string;
   currentClass: string; institution: string; testCategory: string;
-  coursePreference: string; receiptKey: string;
+  coursePreference: string; referralSource: string; receiptKey: string;
 };
 
 const STORE_OPTIONS = { name: 'registration-submissions' } as const;
@@ -46,8 +49,10 @@ function storageErrorMessage(error: unknown) {
 
 function toRow(record: StoredRegistration) {
   return [record.createdAt, record.registrationId, record.studentName, record.studentMobile,
-    record.guardianName, record.gender, record.city, record.educationLevel, record.currentClass,
-    record.institution, record.testCategory, record.coursePreference, record.receiptKey];
+    record.guardianName ?? '', record.guardianMobile ?? '', record.guardianOccupation ?? '',
+    record.gender, record.city, record.educationLevel, record.currentClass,
+    record.institution, record.testCategory, record.coursePreference,
+    record.referralSource ?? '', record.receiptKey];
 }
 
 export async function checkRegistrationSetup(): Promise<ApiResult> {
@@ -104,10 +109,13 @@ export async function registerStudent(payload: unknown, storeReceipt?: ReceiptSt
     });
     const record: StoredRegistration = {
       createdAt: new Date().toISOString(), registrationId, studentName: form.studentName,
-      studentMobile: phone, guardianName: form.guardianName, gender: form.gender, city: form.city,
+      studentMobile: phone, guardianName: form.guardianName,
+      guardianMobile: form.guardianMobile ? normalizeMobile(form.guardianMobile) : '',
+      guardianOccupation: form.guardianOccupation, gender: form.gender, city: form.city,
       educationLevel: form.educationLevel, currentClass: form.currentClass,
       institution: form.institution, testCategory: 'Pending GIST assignment',
-      coursePreference: form.coursePreference, receiptKey: storedReceipt.key,
+      coursePreference: form.coursePreference, referralSource: form.referralSource,
+      receiptKey: storedReceipt.key,
     };
 
     try {
