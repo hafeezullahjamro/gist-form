@@ -23,7 +23,7 @@ export async function handler(event: { httpMethod: string; body: string | null }
   }
   let payload: unknown = {};
   try { payload = JSON.parse(event.body ?? '{}'); } catch { /* invalid JSON handled by validation */ }
-  const store = getStore({ name: 'payment-receipts', region: 'ap-southeast-1' });
+  const store = getStore({ name: 'payment-receipts' });
   const storeReceipt: ReceiptStorage = async receipt => {
     const extension = EXTENSIONS[receipt.contentType] ?? 'bin';
     const key = `receipts/${receipt.registrationId}.${extension}`;
