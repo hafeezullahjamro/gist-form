@@ -11,6 +11,7 @@
     "netlify:dev": "npx --yes netlify-cli dev"
   },
   "dependencies": {
+    "@netlify/aws-lambda-compat": "^2.0.4",
     "@netlify/blobs": "^11.1.10",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
