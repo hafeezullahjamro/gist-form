@@ -8,6 +8,8 @@ import {
 export type Registration = {
   studentName: string;
   guardianName: string;
+  guardianMobile: string;
+  guardianOccupation: string;
   gender: string;
   studentMobile: string;
   city: string;
@@ -15,6 +17,7 @@ export type Registration = {
   currentClass: string;
   institution: string;
   coursePreference: string;
+  referralSource: string;
   paymentReceiptName: string;
   paymentReceiptType: string;
   paymentReceiptData: string;
@@ -24,14 +27,14 @@ export type FieldKey = keyof Registration;
 export type Errors = Partial<Record<FieldKey, string>>;
 
 export const EMPTY_REGISTRATION: Registration = {
-  studentName: '', guardianName: '', gender: '', studentMobile: '',
+  studentName: '', guardianName: '', guardianMobile: '', guardianOccupation: '', gender: '', studentMobile: '',
   city: '', educationLevel: '', currentClass: '', institution: '',
-  coursePreference: '', paymentReceiptName: '', paymentReceiptType: '',
+  coursePreference: '', referralSource: '', paymentReceiptName: '', paymentReceiptType: '',
   paymentReceiptData: '',
 };
 
 export const STEP_FIELDS: FieldKey[][] = [
-  ['studentName', 'guardianName', 'gender', 'studentMobile', 'city'],
+  ['studentName', 'guardianName', 'guardianMobile', 'guardianOccupation', 'gender', 'studentMobile', 'city'],
   ['educationLevel', 'currentClass', 'institution', 'coursePreference', 'paymentReceiptData'],
 ];
 
@@ -81,13 +84,16 @@ export function sanitizeRegistration(value: unknown): Registration {
 export function validateRegistration(data: Registration): Errors {
   const errors: Errors = {};
   const required: FieldKey[] = [
-    'studentName', 'gender', 'studentMobile', 'city', 'educationLevel',
+    'studentName', 'guardianOccupation', 'gender', 'studentMobile', 'city', 'educationLevel',
     'currentClass', 'institution', 'coursePreference', 'paymentReceiptData',
   ];
   required.forEach(key => { if (!data[key]) errors[key] = 'This field is required.'; });
 
   if (data.studentName && data.studentName.length < 3) errors.studentName = 'Please enter your full name.';
   if (data.guardianName && data.guardianName.length < 3) errors.guardianName = 'Please enter the guardian’s full name.';
+  if (data.guardianMobile && !PHONE_PATTERN.test(data.guardianMobile.replace(/[\s\-()]/g, ''))) {
+    errors.guardianMobile = 'Use a valid Pakistan number, e.g. 03001234567.';
+  }
   if (data.studentMobile && !PHONE_PATTERN.test(data.studentMobile.replace(/[\s\-()]/g, ''))) {
     errors.studentMobile = 'Use a valid Pakistan number, e.g. 03001234567.';
   }
