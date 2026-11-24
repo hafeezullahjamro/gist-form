@@ -1,5 +1,7 @@
 import { getAdminRegistrationData } from '../../server/register';
 import { verifyAdminCookie } from '../../server/admin-auth';
+import { withLambda } from '@netlify/aws-lambda-compat';
+import type { HandlerResponse } from '@netlify/aws-lambda-compat';
 
 type Event = {
   httpMethod: string;
@@ -14,7 +16,7 @@ function csvCell(value: unknown) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
-export async function handler(event: Event) {
+async function handler(event: Event): Promise<HandlerResponse> {
   if (event.httpMethod !== 'GET') {
     return { statusCode: 405, headers: { ...jsonHeaders, Allow: 'GET' }, body: JSON.stringify({ message: 'Method not allowed.' }) };
   }
@@ -41,3 +43,5 @@ export async function handler(event: Event) {
   }
   return { statusCode: 200, headers: jsonHeaders, body: JSON.stringify(result.data) };
 }
+
+export default withLambda(handler);
