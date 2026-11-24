@@ -1,49 +1,37 @@
-import { randomBytes } from 'node:crypto';
-import { getDatabase } from '@netlify/database';
-import {
-  normalizeMobile,
-  sanitizeRegistration,
-  validateRegistration,
-} from '../shared/validation';
-import type { Registration } from '../shared/validation';
+import { createHash, randomBytes } from 'node:crypto';
+import { getStore } from '@netlify/blobs';
+import { normalizeMobile, sanitizeRegistration, validateRegistration } from '../shared/validation';
 
 type ApiResult = { status: number; data: Record<string, unknown> };
-export type ReceiptStorageInput = {
-  registrationId: string;
-  studentName: string;
-  fileName: string;
-  contentType: string;
-  bytes: Uint8Array;
-};
+export type ReceiptStorageInput = { registrationId: string; studentName: string; fileName: string; contentType: string; bytes: Uint8Array };
 export type ReceiptStorageResult = { key: string; rollback: () => Promise<void> };
 export type ReceiptStorage = (input: ReceiptStorageInput) => Promise<ReceiptStorageResult>;
 
 export const REGISTRATION_HEADERS = [
-  'Timestamp (UTC)', 'Registration ID', 'Student Full Name',
-  'Student WhatsApp', 'Father / Guardian Name', 'Gender',
-  'City / District', 'Current Education Level', 'Class / Year / Semester',
-  'School / College / University', 'Test Category (Assigned by GIST)',
-  'Preferred GIST Course', 'Payment Receipt Blob Key',
+  'Timestamp (UTC)', 'Registration ID', 'Student Full Name', 'Student WhatsApp',
+  'Father / Guardian Name', 'Gender', 'City / District', 'Current Education Level',
+  'Class / Year / Semester', 'School / College / University',
+  'Test Category (Assigned by GIST)', 'Preferred GIST Course', 'Payment Receipt Blob Key',
 ];
 
-type RegistrationRow = {
-  created_at: Date | string;
-  registration_id: string;
-  student_name: string;
-  student_mobile: string;
-  guardian_name: string;
-  gender: string;
-  city: string;
-  education_level: string;
-  current_class: string;
-  institution: string;
-  test_category: string;
-  course_preference: string;
-  receipt_key: string;
+type StoredRegistration = {
+  createdAt: string; registrationId: string; studentName: string; studentMobile: string;
+  guardianName: string; gender: string; city: string; educationLevel: string;
+  currentClass: string; institution: string; testCategory: string;
+  coursePreference: string; receiptKey: string;
 };
+
+const STORE_OPTIONS = { name: 'registration-submissions', region: 'ap-southeast-1' } as const;
 
 function normalizedName(value: string) {
   return value.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+}
+
+function duplicateKey(studentName: string, studentMobile: string) {
+  const digest = createHash('sha256')
+    .update(`${normalizedName(studentName)}\n${normalizeMobile(studentMobile)}`)
+    .digest('hex');
+  return `duplicates/${digest}.json`;
 }
 
 function receiptBytes(dataUrl: string): Uint8Array {
@@ -52,159 +40,86 @@ function receiptBytes(dataUrl: string): Uint8Array {
   return Uint8Array.from(Buffer.from(dataUrl.slice(comma + 1), 'base64'));
 }
 
-function databaseErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : 'Unknown database error';
+function storageErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Unknown Netlify Blobs error';
 }
 
-function isDuplicateError(error: unknown) {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === '23505';
-}
-
-function toIsoTimestamp(value: Date | string) {
-  const date = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(date.getTime()) ? String(value) : date.toISOString();
+function toRow(record: StoredRegistration) {
+  return [record.createdAt, record.registrationId, record.studentName, record.studentMobile,
+    record.guardianName, record.gender, record.city, record.educationLevel, record.currentClass,
+    record.institution, record.testCategory, record.coursePreference, record.receiptKey];
 }
 
 export async function checkRegistrationSetup(): Promise<ApiResult> {
   try {
-    const db = getDatabase();
-    await db.sql`SELECT registration_id FROM registrations LIMIT 1`;
-    return {
-      status: 200,
-      data: {
-        ok: true,
-        message: 'Netlify Database is connected and ready.',
-        registrationStorage: 'Netlify Database',
-        receiptStorage: 'Netlify Blobs',
-      },
-    };
+    const store = getStore(STORE_OPTIONS);
+    await store.list({ prefix: 'registrations/' });
+    return { status: 200, data: {
+      ok: true, message: 'Netlify storage is connected and ready.',
+      registrationStorage: 'Netlify Blobs', receiptStorage: 'Netlify Blobs',
+    } };
   } catch (error) {
-    console.error('[GIST setup check]', databaseErrorMessage(error));
-    return {
-      status: 503,
-      data: {
-        ok: false,
-        message: 'Netlify Database is not ready yet. Check the latest deploy and database migration.',
-      },
-    };
+    console.error('[GIST setup check]', storageErrorMessage(error));
+    return { status: 503, data: { ok: false, message: 'Netlify storage is not ready yet. Check the latest deploy.' } };
   }
 }
 
 export async function getAdminRegistrationData(): Promise<ApiResult> {
   try {
-    const db = getDatabase();
-    const rows = await db.sql<RegistrationRow>`
-      SELECT
-        created_at, registration_id, student_name, student_mobile,
-        guardian_name, gender, city, education_level, current_class,
-        institution, test_category, course_preference, receipt_key
-      FROM registrations
-      ORDER BY created_at DESC
-    `;
-    const normalizedRows = rows.map(row => [
-      toIsoTimestamp(row.created_at),
-      row.registration_id,
-      row.student_name,
-      row.student_mobile,
-      row.guardian_name,
-      row.gender,
-      row.city,
-      row.education_level,
-      row.current_class,
-      row.institution,
-      row.test_category,
-      row.course_preference,
-      row.receipt_key,
-    ]);
-    return { status: 200, data: { headers: REGISTRATION_HEADERS, rows: normalizedRows } };
+    const store = getStore(STORE_OPTIONS);
+    const { blobs } = await store.list({ prefix: 'registrations/' });
+    const records = await Promise.all(
+      blobs.map(blob => store.get(blob.key, { type: 'json' }) as Promise<StoredRegistration | null>),
+    );
+    const rows = records
+      .filter((record): record is StoredRegistration => record !== null)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map(toRow);
+    return { status: 200, data: { headers: REGISTRATION_HEADERS, rows } };
   } catch (error) {
-    console.error('[GIST admin data]', databaseErrorMessage(error));
-    return {
-      status: 503,
-      data: { message: 'The registration dashboard is temporarily unavailable.' },
-    };
+    console.error('[GIST admin data]', storageErrorMessage(error));
+    return { status: 503, data: { message: 'The registration dashboard is temporarily unavailable.' } };
   }
 }
 
 export async function registerStudent(payload: unknown, storeReceipt?: ReceiptStorage): Promise<ApiResult> {
-  if (JSON.stringify(payload ?? {}).length > 3_000_000) {
-    return { status: 413, data: { message: 'The request is too large.' } };
-  }
+  if (JSON.stringify(payload ?? {}).length > 3_000_000) return { status: 413, data: { message: 'The request is too large.' } };
   const form = sanitizeRegistration(payload);
   const errors = validateRegistration(form);
-  if (Object.keys(errors).length > 0) {
-    return { status: 422, data: { message: 'Please check the highlighted fields.', errors } };
-  }
+  if (Object.keys(errors).length > 0) return { status: 422, data: { message: 'Please check the highlighted fields.', errors } };
 
   try {
-    const db = getDatabase();
-    const normalizedStudentName = normalizedName(form.studentName);
-    const normalizedPhone = normalizeMobile(form.studentMobile);
-    const duplicate = await db.sql<{ registration_id: string }>`
-      SELECT registration_id
-      FROM registrations
-      WHERE student_name_normalized = ${normalizedStudentName}
-        AND student_mobile = ${normalizedPhone}
-      LIMIT 1
-    `;
-    if (duplicate.length > 0) {
-      return {
-        status: 409,
-        data: {
-          message: 'A registration with this student name and WhatsApp number already exists. Please contact GIST if you need to make a correction.',
-        },
-      };
+    const store = getStore(STORE_OPTIONS);
+    const phone = normalizeMobile(form.studentMobile);
+    const dedupeKey = duplicateKey(form.studentName, phone);
+    if (await store.get(dedupeKey, { type: 'json' })) {
+      return { status: 409, data: { message: 'A registration with this student name and WhatsApp number already exists. Please contact GIST if you need to make a correction.' } };
     }
 
     const registrationId = `GIST-2026-${randomBytes(5).toString('hex').toUpperCase()}`;
     if (!storeReceipt) throw new Error('Payment receipt storage is not configured');
     const storedReceipt = await storeReceipt({
-      registrationId,
-      studentName: form.studentName,
-      fileName: form.paymentReceiptName,
-      contentType: form.paymentReceiptType,
-      bytes: receiptBytes(form.paymentReceiptData),
+      registrationId, studentName: form.studentName, fileName: form.paymentReceiptName,
+      contentType: form.paymentReceiptType, bytes: receiptBytes(form.paymentReceiptData),
     });
+    const record: StoredRegistration = {
+      createdAt: new Date().toISOString(), registrationId, studentName: form.studentName,
+      studentMobile: phone, guardianName: form.guardianName, gender: form.gender, city: form.city,
+      educationLevel: form.educationLevel, currentClass: form.currentClass,
+      institution: form.institution, testCategory: 'Pending GIST assignment',
+      coursePreference: form.coursePreference, receiptKey: storedReceipt.key,
+    };
 
     try {
-      await db.sql`
-        INSERT INTO registrations (
-          registration_id, student_name, student_name_normalized,
-          student_mobile, guardian_name, gender, city, education_level,
-          current_class, institution, test_category, course_preference,
-          receipt_key
-        ) VALUES (
-          ${registrationId}, ${form.studentName}, ${normalizedStudentName},
-          ${normalizedPhone}, ${form.guardianName}, ${form.gender},
-          ${form.city}, ${form.educationLevel}, ${form.currentClass},
-          ${form.institution}, 'Pending GIST assignment',
-          ${form.coursePreference}, ${storedReceipt.key}
-        )
-      `;
+      await store.setJSON(`registrations/${record.createdAt}_${registrationId}.json`, record);
+      await store.setJSON(dedupeKey, { registrationId, createdAt: record.createdAt });
     } catch (error) {
       await storedReceipt.rollback().catch(() => undefined);
-      if (isDuplicateError(error)) {
-        return {
-          status: 409,
-          data: {
-            message: 'A registration with this student name and WhatsApp number already exists. Please contact GIST if you need to make a correction.',
-          },
-        };
-      }
       throw error;
     }
-
-    return {
-      status: 201,
-      data: { message: 'Your registration has been received.', registrationId },
-    };
+    return { status: 201, data: { message: 'Your registration has been received.', registrationId } };
   } catch (error) {
-    console.error('[GIST registration]', databaseErrorMessage(error));
-    return {
-      status: 503,
-      data: {
-        message: 'Registration is temporarily unavailable. Please try again or contact GIST.',
-      },
-    };
+    console.error('[GIST registration]', storageErrorMessage(error));
+    return { status: 503, data: { message: 'Registration is temporarily unavailable. Please try again or contact GIST.' } };
   }
 }
