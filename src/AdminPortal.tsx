@@ -171,7 +171,7 @@ export default function AdminPortal({ onExit }: { onExit: () => void }) {
                 <tr key={row[1] || rowIndex}>
                   {data.headers.map((header, columnIndex) => (
                     <td key={header}>
-                      {columnIndex === 12 && row[columnIndex]
+                      {header === 'Payment Receipt Blob Key' && row[columnIndex]
                         ? <a className="receipt-view" href={`/api/admin/receipt?key=${encodeURIComponent(row[columnIndex])}`} target="_blank" rel="noreferrer"><Eye size={15} />View receipt</a>
                         : row[columnIndex] || <span className="empty-cell">—</span>}
                     </td>
