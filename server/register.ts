@@ -8,7 +8,7 @@ export type ReceiptStorageResult = { key: string; rollback: () => Promise<void> 
 export type ReceiptStorage = (input: ReceiptStorageInput) => Promise<ReceiptStorageResult>;
 
 export const REGISTRATION_HEADERS = [
-  'Timestamp (UTC)', 'Registration ID', 'Student Full Name', 'Student WhatsApp',
+  'Timestamp (UTC)', 'Registration ID', 'Student Full Name', 'Student CNIC / B-Form', 'Student WhatsApp',
   'Father / Guardian Name', 'Father / Guardian Contact', 'Father / Guardian Occupation',
   'Gender', 'City / District', 'Current Education Level',
   'Class / Year / Semester', 'School / College / University',
@@ -17,7 +17,7 @@ export const REGISTRATION_HEADERS = [
 ];
 
 type StoredRegistration = {
-  createdAt: string; registrationId: string; studentName: string; studentMobile: string;
+  createdAt: string; registrationId: string; studentName: string; cnicNumber: string; studentMobile: string;
   guardianName: string; guardianMobile: string; guardianOccupation: string;
   gender: string; city: string; educationLevel: string;
   currentClass: string; institution: string; testCategory: string;
@@ -48,7 +48,7 @@ function storageErrorMessage(error: unknown) {
 }
 
 function toRow(record: StoredRegistration) {
-  return [record.createdAt, record.registrationId, record.studentName, record.studentMobile,
+  return [record.createdAt, record.registrationId, record.studentName, record.cnicNumber ?? '', record.studentMobile,
     record.guardianName ?? '', record.guardianMobile ?? '', record.guardianOccupation ?? '',
     record.gender, record.city, record.educationLevel, record.currentClass,
     record.institution, record.testCategory, record.coursePreference,
@@ -109,6 +109,7 @@ export async function registerStudent(payload: unknown, storeReceipt?: ReceiptSt
     });
     const record: StoredRegistration = {
       createdAt: new Date().toISOString(), registrationId, studentName: form.studentName,
+      cnicNumber: form.cnicNumber.replace(/\s/g, ''),
       studentMobile: phone, guardianName: form.guardianName,
       guardianMobile: form.guardianMobile ? normalizeMobile(form.guardianMobile) : '',
       guardianOccupation: form.guardianOccupation, gender: form.gender, city: form.city,
