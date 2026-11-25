@@ -22,13 +22,20 @@ export const CLASSES_BY_LEVEL: Record<string, string[]> = {
 };
 
 export const GIST_COURSES = [
-  'DIT',
-  'CIT',
+  'DIT – Diploma in Information Technology',
+  'CIT – Certificate in Information Technology',
+  'Agentic AI + AI Automation',
+  'Cyber Security',
+  'Ethical Hacking',
+  'Python | Web Development',
   'Web Development',
   'App Development',
-  'No-Code Development',
-  'Artificial Intelligence',
-  'Cybersecurity',
+  'Zero Code Development',
+  'Digital Marketing',
+  'E-Commerce',
+  'Freelancing',
+  'Robotics',
+  'English Language',
   'Other / Not Sure Yet',
 ] as const;
 
