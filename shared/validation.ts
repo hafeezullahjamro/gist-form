@@ -7,6 +7,7 @@ import {
 
 export type Registration = {
   studentName: string;
+  cnicNumber: string;
   guardianName: string;
   guardianMobile: string;
   guardianOccupation: string;
@@ -27,18 +28,19 @@ export type FieldKey = keyof Registration;
 export type Errors = Partial<Record<FieldKey, string>>;
 
 export const EMPTY_REGISTRATION: Registration = {
-  studentName: '', guardianName: '', guardianMobile: '', guardianOccupation: '', gender: '', studentMobile: '',
+  studentName: '', cnicNumber: '', guardianName: '', guardianMobile: '', guardianOccupation: '', gender: '', studentMobile: '',
   city: '', educationLevel: '', currentClass: '', institution: '',
   coursePreference: '', referralSource: '', paymentReceiptName: '', paymentReceiptType: '',
   paymentReceiptData: '',
 };
 
 export const STEP_FIELDS: FieldKey[][] = [
-  ['studentName', 'guardianName', 'guardianMobile', 'guardianOccupation', 'gender', 'studentMobile', 'city'],
+  ['studentName', 'cnicNumber', 'guardianName', 'guardianMobile', 'guardianOccupation', 'gender', 'studentMobile', 'city'],
   ['educationLevel', 'currentClass', 'institution', 'coursePreference', 'paymentReceiptData'],
 ];
 
 const PHONE_PATTERN = /^(?:\+92|92|0)3\d{9}$/;
+const CNIC_PATTERN = /^\d{5}-?\d{7}-?\d$/;
 export const MAX_RECEIPT_BYTES = 2 * 1024 * 1024;
 export const PAYMENT_RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] as const;
 const asString = (value: unknown): string => typeof value === 'string' ? value.trim() : '';
@@ -84,12 +86,15 @@ export function sanitizeRegistration(value: unknown): Registration {
 export function validateRegistration(data: Registration): Errors {
   const errors: Errors = {};
   const required: FieldKey[] = [
-    'studentName', 'guardianOccupation', 'gender', 'studentMobile', 'city', 'educationLevel',
+    'studentName', 'cnicNumber', 'guardianOccupation', 'gender', 'studentMobile', 'city', 'educationLevel',
     'currentClass', 'institution', 'coursePreference', 'paymentReceiptData',
   ];
   required.forEach(key => { if (!data[key]) errors[key] = 'This field is required.'; });
 
   if (data.studentName && data.studentName.length < 3) errors.studentName = 'Please enter your full name.';
+  if (data.cnicNumber && !CNIC_PATTERN.test(data.cnicNumber.replace(/\s/g, ''))) {
+    errors.cnicNumber = 'Enter a valid 13-digit CNIC or B-Form number.';
+  }
   if (data.guardianName && data.guardianName.length < 3) errors.guardianName = 'Please enter the guardian’s full name.';
   if (data.guardianMobile && !PHONE_PATTERN.test(data.guardianMobile.replace(/[\s\-()]/g, ''))) {
     errors.guardianMobile = 'Use a valid Pakistan number, e.g. 03001234567.';
