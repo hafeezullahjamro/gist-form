@@ -326,10 +326,10 @@ function App() {
                 {step === 0 && <div className="fields-grid">
                   <Field id="studentName" label="Student full name" required errors={errors}>{input('studentName', 'Enter your full name', { autoComplete: 'name' })}</Field>
                   <Field id="guardianName" label="Father / guardian name" errors={errors}>{input('guardianName', 'Optional')}</Field>
+                  <Field id="studentMobile" label="Personal contact / WhatsApp number" required errors={errors}>{input('studentMobile', '03XX XXXXXXX', { type: 'tel', inputMode: 'tel', autoComplete: 'tel' })}</Field>
                   <Field id="guardianMobile" label="Father / guardian contact number" errors={errors}>{input('guardianMobile', 'Optional — 03XX XXXXXXX', { type: 'tel', inputMode: 'tel' })}</Field>
-                  <Field id="guardianOccupation" label="Father / guardian occupation" required errors={errors}>{input('guardianOccupation', 'Enter occupation')}</Field>
                   <Field id="gender" label="Gender" required errors={errors}>{select('gender', 'Select gender', GENDERS)}</Field>
-                  <Field id="studentMobile" label="Mobile / WhatsApp number" required errors={errors}>{input('studentMobile', '03XX XXXXXXX', { type: 'tel', inputMode: 'tel', autoComplete: 'tel' })}</Field>
+                  <Field id="guardianOccupation" label="Father / guardian occupation" required errors={errors}>{input('guardianOccupation', 'Enter occupation')}</Field>
                   <div className="field-span-2"><Field id="city" label="City / district" required errors={errors}>{input('city', 'e.g. Sukkur', { autoComplete: 'address-level2' })}</Field></div>
                 </div>}
 
