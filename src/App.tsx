@@ -325,6 +325,7 @@ function App() {
               <form noValidate onSubmit={onSubmit}>
                 {step === 0 && <div className="fields-grid">
                   <Field id="studentName" label="Student full name" required errors={errors}>{input('studentName', 'Enter your full name', { autoComplete: 'name' })}</Field>
+                  <Field id="cnicNumber" label="CNIC or B-Form number" required errors={errors} description="If the student does not have one, enter the father or guardian CNIC number.">{input('cnicNumber', 'XXXXX-XXXXXXX-X', { type: 'tel', inputMode: 'tel' })}</Field>
                   <Field id="guardianName" label="Father / guardian name" errors={errors}>{input('guardianName', 'Optional')}</Field>
                   <Field id="studentMobile" label="Personal contact / WhatsApp number" required errors={errors}>{input('studentMobile', '03XX XXXXXXX', { type: 'tel', inputMode: 'tel', autoComplete: 'tel' })}</Field>
                   <Field id="guardianMobile" label="Father / guardian contact number" errors={errors}>{input('guardianMobile', 'Optional — 03XX XXXXXXX', { type: 'tel', inputMode: 'tel' })}</Field>
